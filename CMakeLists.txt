@@ -262,6 +262,69 @@ if(BUILD_TESTING)
         -P ${CMAKE_SOURCE_DIR}/tests/check_transform_while_outer_reference.cmake
     )
 
+    
+    add_test(
+        NAME transform_nested_scopes
+        COMMAND ${CMAKE_COMMAND}
+            -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+            -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_nested_scopes.cpp
+            -DOUTPUT=${CMAKE_BINARY_DIR}/nested_scopes_output.cpp
+            -P ${CMAKE_SOURCE_DIR}/tests/check_transform_nested_scopes.cmake
+    )
+
+    add_test(
+    NAME transform_nested_for_scopes
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_nested_for_scopes.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/nested_for_scopes_output.cpp
+        -P ${CMAKE_SOURCE_DIR}/tests/check_transform_nested_for_scopes.cmake
+    )
+
+    add_test(
+    NAME transform_nested_for_different_names
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_nested_for_different_names.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/nested_for_different_names_output.cpp
+        -P ${CMAKE_SOURCE_DIR}/tests/check_transform_nested_for_different_names.cmake
+    )
+
+    add_test(
+    NAME transform_multiple_variables
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_multiple_variables.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/multiple_variables_output.cpp
+        -P ${CMAKE_SOURCE_DIR}/tests/check_transform_multiple_variables.cmake
+    )
+
+    add_test(
+    NAME transform_lambda_capture
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_lambda_capture.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/lambda_capture_output.cpp
+        -P ${CMAKE_SOURCE_DIR}/tests/check_transform_lambda_capture.cmake
+    )
+
+    add_test(
+    NAME transform_lambda_shadowing
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_lambda_shadowing.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/lambda_shadowing_output.cpp
+        -P ${CMAKE_SOURCE_DIR}/tests/check_transform_lambda_shadowing.cmake
+    )
+
+    add_test(
+    NAME transform_lambda_parameters
+    COMMAND obfuscator
+        --input ${CMAKE_SOURCE_DIR}/tests/data/transform_lambda_parameters.cpp
+        --output ${CMAKE_BINARY_DIR}/lambda_parameters_output.cpp
+        --level 1
+    )
+
 endif()
 
 # Tree-sitter runtime and C++ grammar

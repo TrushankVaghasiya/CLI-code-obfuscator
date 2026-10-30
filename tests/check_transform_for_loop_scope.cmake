@@ -19,13 +19,14 @@ if(NOT content MATCHES "for \\(int obf_var_[0-9]+ = 0;")
 endif()
 
 # The variable declared after the loop must remain unchanged.
-if(NOT content MATCHES "int i = 100;")
-    message(FATAL_ERROR "Variable outside the loop was incorrectly renamed")
+# The variable declared after the loop must also be renamed.
+if(NOT content MATCHES "int obf_var_[0-9]+ = 100;")
+    message(FATAL_ERROR "Variable outside the loop was not renamed")
 endif()
 
-# Its reference must also remain unchanged.
-if(NOT content MATCHES "cout << i << '\\\\n';")
-    message(FATAL_ERROR "Reference outside the loop was incorrectly renamed")
+# Its reference must also be renamed.
+if(NOT content MATCHES "cout << obf_var_[0-9]+ << '\\\\n';")
+    message(FATAL_ERROR "Reference outside the loop was not renamed")
 endif()
 
 message(STATUS "For-loop scope test passed")
