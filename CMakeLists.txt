@@ -29,6 +29,7 @@ add_executable(obfuscator
     src/parser.cpp
     src/identifier_analyzer.cpp
     src/transformer.cpp
+    src/literal_transformer.cpp
 )
 
 target_include_directories(obfuscator

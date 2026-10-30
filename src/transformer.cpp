@@ -1,4 +1,5 @@
 #include "transformer.hpp"
+#include "literal_transformer.hpp"
 #include <tree_sitter/api.h>
 #include <iostream>
 #include <algorithm>
@@ -476,6 +477,16 @@ bool transformCppFile(
         }
 
         std::cout << "[INFO] Comment removal completed.\n";
+    }
+
+    // Level 3: transform eligible integer literals.
+    if (level >= 3) {
+        if (!transformIntegerLiterals(source, error)) {
+            std::cerr << "[ERROR] " << error << '\n';
+            return false;
+        }
+
+        std::cout << "[INFO] Integer literal transformation completed.\n";
     }
 
     ts_tree_delete(tree);
