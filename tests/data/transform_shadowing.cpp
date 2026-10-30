@@ -1,13 +1,15 @@
+
 #include <iostream>
 
 int main() {
-    int value = 10;
+    int outer = 10;
 
     {
-        int value = 20;
-        std::cout << value << '\n';
+        int inner = 20;
+        std::cout << inner << '\n';
     }
 
-    std::cout << value << '\n';
+    std::cout << outer << '\n';
+
     return 0;
 }

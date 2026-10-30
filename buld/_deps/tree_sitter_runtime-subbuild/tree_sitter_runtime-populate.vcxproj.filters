@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_runtime-subbuild\CMakeFiles\94819d7e5539ccbeaf6eb9311e8ae25b\tree_sitter_runtime-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_runtime-subbuild\CMakeFiles\94819d7e5539ccbeaf6eb9311e8ae25b\tree_sitter_runtime-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_runtime-subbuild\CMakeFiles\94819d7e5539ccbeaf6eb9311e8ae25b\tree_sitter_runtime-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_runtime-subbuild\CMakeFiles\94819d7e5539ccbeaf6eb9311e8ae25b\tree_sitter_runtime-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_runtime-subbuild\CMakeFiles\94819d7e5539ccbeaf6eb9311e8ae25b\tree_sitter_runtime-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_runtime-subbuild\CMakeFiles\94819d7e5539ccbeaf6eb9311e8ae25b\tree_sitter_runtime-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_runtime-subbuild\CMakeFiles\94819d7e5539ccbeaf6eb9311e8ae25b\tree_sitter_runtime-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_runtime-subbuild\CMakeFiles\94819d7e5539ccbeaf6eb9311e8ae25b\tree_sitter_runtime-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_runtime-subbuild\CMakeFiles\3ffdc173bedd873156dc20a767bbfc19\tree_sitter_runtime-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_runtime-subbuild\CMakeFiles\5c8593956b4bd0852f230edfce72a121\tree_sitter_runtime-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_runtime-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="D:\oops_proj\project\buld\_deps\tree_sitter_runtime-subbuild\CMakeFiles\tree_sitter_runtime-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{12424840-CABF-3AE6-9EA0-AA283F819674}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

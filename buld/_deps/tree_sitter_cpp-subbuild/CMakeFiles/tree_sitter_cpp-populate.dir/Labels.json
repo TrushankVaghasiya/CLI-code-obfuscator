@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "D:/oops_proj/project/buld/_deps/tree_sitter_cpp-subbuild/CMakeFiles/tree_sitter_cpp-populate"
+		},
+		{
+			"file" : "D:/oops_proj/project/buld/_deps/tree_sitter_cpp-subbuild/CMakeFiles/d6fba227679f4269a3f315df57400f41/tree_sitter_cpp-populate.rule"
+		},
+		{
+			"file" : "D:/oops_proj/project/buld/_deps/tree_sitter_cpp-subbuild/CMakeFiles/f91a00f8259559a432e54d49b94b2321/tree_sitter_cpp-populate-complete.rule"
+		},
+		{
+			"file" : "D:/oops_proj/project/buld/_deps/tree_sitter_cpp-subbuild/CMakeFiles/afab3cb7ddfe4d821844ca016803cdd2/tree_sitter_cpp-populate-build.rule"
+		},
+		{
+			"file" : "D:/oops_proj/project/buld/_deps/tree_sitter_cpp-subbuild/CMakeFiles/afab3cb7ddfe4d821844ca016803cdd2/tree_sitter_cpp-populate-configure.rule"
+		},
+		{
+			"file" : "D:/oops_proj/project/buld/_deps/tree_sitter_cpp-subbuild/CMakeFiles/afab3cb7ddfe4d821844ca016803cdd2/tree_sitter_cpp-populate-download.rule"
+		},
+		{
+			"file" : "D:/oops_proj/project/buld/_deps/tree_sitter_cpp-subbuild/CMakeFiles/afab3cb7ddfe4d821844ca016803cdd2/tree_sitter_cpp-populate-install.rule"
+		},
+		{
+			"file" : "D:/oops_proj/project/buld/_deps/tree_sitter_cpp-subbuild/CMakeFiles/afab3cb7ddfe4d821844ca016803cdd2/tree_sitter_cpp-populate-mkdir.rule"
+		},
+		{
+			"file" : "D:/oops_proj/project/buld/_deps/tree_sitter_cpp-subbuild/CMakeFiles/afab3cb7ddfe4d821844ca016803cdd2/tree_sitter_cpp-populate-patch.rule"
+		},
+		{
+			"file" : "D:/oops_proj/project/buld/_deps/tree_sitter_cpp-subbuild/CMakeFiles/afab3cb7ddfe4d821844ca016803cdd2/tree_sitter_cpp-populate-test.rule"
+		},
+		{
+			"file" : "D:/oops_proj/project/buld/_deps/tree_sitter_cpp-subbuild/CMakeFiles/afab3cb7ddfe4d821844ca016803cdd2/tree_sitter_cpp-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"tree_sitter_cpp-populate"
+		],
+		"name" : "tree_sitter_cpp-populate"
+	}
+}

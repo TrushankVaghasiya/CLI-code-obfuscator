@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_cpp-subbuild\CMakeFiles\afab3cb7ddfe4d821844ca016803cdd2\tree_sitter_cpp-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_cpp-subbuild\CMakeFiles\afab3cb7ddfe4d821844ca016803cdd2\tree_sitter_cpp-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_cpp-subbuild\CMakeFiles\afab3cb7ddfe4d821844ca016803cdd2\tree_sitter_cpp-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_cpp-subbuild\CMakeFiles\afab3cb7ddfe4d821844ca016803cdd2\tree_sitter_cpp-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_cpp-subbuild\CMakeFiles\afab3cb7ddfe4d821844ca016803cdd2\tree_sitter_cpp-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_cpp-subbuild\CMakeFiles\afab3cb7ddfe4d821844ca016803cdd2\tree_sitter_cpp-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_cpp-subbuild\CMakeFiles\afab3cb7ddfe4d821844ca016803cdd2\tree_sitter_cpp-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_cpp-subbuild\CMakeFiles\afab3cb7ddfe4d821844ca016803cdd2\tree_sitter_cpp-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_cpp-subbuild\CMakeFiles\f91a00f8259559a432e54d49b94b2321\tree_sitter_cpp-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_cpp-subbuild\CMakeFiles\d6fba227679f4269a3f315df57400f41\tree_sitter_cpp-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\oops_proj\project\buld\_deps\tree_sitter_cpp-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="D:\oops_proj\project\buld\_deps\tree_sitter_cpp-subbuild\CMakeFiles\tree_sitter_cpp-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{5162FBF2-7DCD-305E-8DF5-BE5EED204AB8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

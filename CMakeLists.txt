@@ -118,6 +118,150 @@ if(BUILD_TESTING)
         "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/test-transform-basic.cpp"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_basic.cmake"
     )
+
+    # Level 3 integer literal transformation test.
+    add_test(
+        NAME transform_level3
+        COMMAND ${CMAKE_COMMAND}
+            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
+            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_level3.cpp"
+            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/test-transform-level3.cpp"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_level3.cmake"
+    )
+
+    # Level 2 comment-removal test.
+    add_test(
+        NAME transform_comments
+        COMMAND ${CMAKE_COMMAND}
+            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
+            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_comments.cpp"
+            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/test-transform-comments.cpp"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_comments.cmake"
+    )
+
+    # String and character literal preservation test.
+    add_test(
+        NAME transform_literals
+        COMMAND ${CMAKE_COMMAND}
+            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
+            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_literals.cpp"
+            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/test-transform-literals.cpp"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_literals.cmake"
+    )
+
+    # Nested reference test.
+    add_test(
+        NAME transform_nested_reference
+        COMMAND ${CMAKE_COMMAND}
+            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
+            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_nested_reference.cpp"
+            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/test-transform-nested-reference.cpp"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_nested_reference.cmake"
+    )
+
+    # True variable shadowing test.
+    add_test(
+        NAME transform_true_shadowing
+        COMMAND ${CMAKE_COMMAND}
+            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
+            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_true_shadowing.cpp"
+            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/test-transform-true-shadowing.cpp"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_true_shadowing.cmake"
+    )
+
+        # For-loop variable renaming test.
+    add_test(
+        NAME transform_for_loop
+        COMMAND ${CMAKE_COMMAND}
+            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
+            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/for_loop.cpp"
+            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/test-transform-for-loop.cpp"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_for_loop.cmake"
+    )
+
+        # Verify for-loop variable scope.
+    add_test(
+        NAME transform_for_loop_scope
+        COMMAND ${CMAKE_COMMAND}
+            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
+            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_for_loop_scope.cpp"
+            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/test-transform-for-loop-scope.cpp"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_for_loop_scope.cmake"
+    )
+
+    add_test(
+    NAME transform_for_loop_shadowing
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_for_loop_shadowing.cpp
+        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/for_loop_shadowing_output.cpp
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_for_loop_shadowing.cmake
+    )
+
+    
+    add_test(
+        NAME transform_multi_level_shadowing
+        COMMAND ${CMAKE_COMMAND}
+            -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+            -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_multi_level_shadowing.cpp
+            -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/multi_level_shadowing_output.cpp
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_multi_level_shadowing.cmake
+    )
+
+        
+    add_test(
+        NAME transform_if_condition
+        COMMAND ${CMAKE_COMMAND}
+            -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+            -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_if_condition.cpp
+            -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/if_condition_output.cpp
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_if_condition.cmake
+    )
+
+    add_test(
+        NAME transform_if_else
+        COMMAND ${CMAKE_COMMAND}
+            -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+            -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_if_else.cpp
+            -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/if_else_output.cpp
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_if_else.cmake
+    )
+
+    add_test(
+        NAME transform_if_shadowing
+        COMMAND ${CMAKE_COMMAND}
+            -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+            -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_if_shadowing.cpp
+            -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/if_shadowing_output.cpp
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_if_shadowing.cmake
+    )
+    add_test(
+    NAME transform_while_condition
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_while_condition.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/while_condition_output.cpp
+        -P ${CMAKE_SOURCE_DIR}/tests/check_transform_while_condition.cmake
+    )
+
+    add_test(
+    NAME transform_while_shadowing
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_while_shadowing.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/while_shadowing_output.cpp
+        -P ${CMAKE_SOURCE_DIR}/tests/check_transform_while_shadowing.cmake
+    )
+
+    add_test(
+    NAME transform_while_outer_reference
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_while_outer_reference.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/while_outer_reference_output.cpp
+        -P ${CMAKE_SOURCE_DIR}/tests/check_transform_while_outer_reference.cmake
+    )
+
 endif()
 
 # Tree-sitter runtime and C++ grammar
@@ -181,3 +325,13 @@ set_target_properties(tree_sitter_cpp_grammar PROPERTIES
     C_STANDARD_REQUIRED ON
 )
 
+# Temporary AST inspector for debugging Tree-sitter syntax trees.
+add_executable(ast_inspector
+    tests/ast_inspector.cpp
+)
+
+target_link_libraries(ast_inspector
+    PRIVATE
+        tree_sitter_runtime_lib
+        tree_sitter_cpp_grammar
+)

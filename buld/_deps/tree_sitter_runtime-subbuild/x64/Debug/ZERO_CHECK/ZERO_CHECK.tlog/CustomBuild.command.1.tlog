@@ -1,0 +1,10 @@
+^D:\OOPS_PROJ\PROJECT\BULD\_DEPS\TREE_SITTER_RUNTIME-SUBBUILD\CMAKEFILES\5C8593956B4BD0852F230EDFCE72A121\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/oops_proj/project/buld/_deps/tree_sitter_runtime-subbuild -BD:/oops_proj/project/buld/_deps/tree_sitter_runtime-subbuild --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file D:/oops_proj/project/buld/_deps/tree_sitter_runtime-subbuild/tree_sitter_runtime-populate.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

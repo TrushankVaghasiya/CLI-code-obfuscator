@@ -41,15 +41,20 @@ std::string nodeText(TSNode node, const std::string& source) {
     return source.substr(start, end - start);
 }
 
+
 bool isSimpleInitializedLocal(TSNode declaration, Candidate& result,
                               const std::string& source) {
     if (std::string(ts_node_type(declaration)) != "declaration") {
         return false;
     }
 
+    
     bool hasPrimitiveType = false;
     TSNode initDeclarator = {};
+    TSNode directIdentifier = {};
     int initDeclaratorCount = 0;
+    int directIdentifierCount = 0;
+    bool seenEquals = false;
 
     const std::uint32_t count = ts_node_child_count(declaration);
 
@@ -65,16 +70,43 @@ bool isSimpleInitializedLocal(TSNode declaration, Candidate& result,
             initDeclarator = child;
             ++initDeclaratorCount;
         }
+
+        if (type == "=") {
+            seenEquals = true;
+        }
+
+        // Only consider identifiers before the initializer.
+        if (type == "identifier" && !seenEquals) {
+            directIdentifier = child;
+            ++directIdentifierCount;
+        }
     }
 
-    // Initially support only one initialized variable with a built-in type.
-    if (!hasPrimitiveType || initDeclaratorCount != 1) {
+
+    if (!hasPrimitiveType) {
         return false;
     }
 
-    TSNode nameNode = ts_node_child_by_field_name(
-        initDeclarator, "declarator", 10
-    );
+    TSNode nameNode = {};
+
+    if (initDeclaratorCount == 1 && directIdentifierCount == 0) {
+
+        // Ordinary initialized declaration.
+        nameNode = ts_node_child_by_field_name(
+            initDeclarator, "declarator", 10
+        );
+
+    }
+    else if (initDeclaratorCount == 0 &&
+             directIdentifierCount == 1) {
+
+        // Condition declaration, such as while (int value = count).
+        nameNode = directIdentifier;
+
+    }
+    else {
+        return false;
+    }
 
     if (ts_node_is_null(nameNode) ||
         std::string(ts_node_type(nameNode)) != "identifier") {
@@ -88,23 +120,8 @@ bool isSimpleInitializedLocal(TSNode declaration, Candidate& result,
     return !result.name.empty();
 }
 
-bool subtreeContainsName(TSNode node, const std::string& name,
-                         const std::string& source) {
-    if (std::string(ts_node_type(node)) == "identifier" &&
-        nodeText(node, source) == name) {
-        return true;
-    }
 
-    const std::uint32_t count = ts_node_child_count(node);
 
-    for (std::uint32_t i = 0; i < count; ++i) {
-        if (subtreeContainsName(ts_node_child(node, i), name, source)) {
-            return true;
-        }
-    }
-
-    return false;
-}
 
 bool isAnotherDeclarationName(TSNode node) {
     TSNode parent = ts_node_parent(node);
@@ -143,6 +160,51 @@ bool isAnotherDeclarationName(TSNode node) {
     return false;
 }
 
+
+bool subtreeDeclaresName(
+    TSNode node,
+    const std::string& name,
+    const std::string& source
+) {
+    if (std::string(ts_node_type(node)) == "identifier" &&
+        nodeText(node, source) == name &&
+        isAnotherDeclarationName(node)) {
+        return true;
+    }
+
+    const std::uint32_t count = ts_node_child_count(node);
+
+    for (std::uint32_t i = 0; i < count; ++i) {
+        if (subtreeDeclaresName(
+                ts_node_child(node, i), name, source)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool compoundDeclaresNameInOwnScope(
+    TSNode compound,
+    const std::string& name,
+    const std::string& source
+) {
+    const std::uint32_t count = ts_node_child_count(compound);
+
+    for (std::uint32_t i = 0; i < count; ++i) {
+        TSNode child = ts_node_child(compound, i);
+
+        // Only inspect direct declarations.
+        // Do not recursively inspect nested compound statements.
+        if (std::string(ts_node_type(child)) == "declaration" &&
+            subtreeDeclaresName(child, name, source)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void collectReferences(
     TSNode node,
     TSNode rootBody,
@@ -153,23 +215,27 @@ void collectReferences(
 ) {
     const std::string type = ts_node_type(node);
 
-    // Don't descend into nested blocks: their scopes need separate analysis.
+    // Check nested blocks for declarations that shadow this variable.
     if (!ts_node_eq(node, rootBody) && type == "compound_statement") {
-        if (subtreeContainsName(node, candidate.name, source)) {
-            unsafe = true;
-        }
-        return;
+
+    if (compoundDeclaresNameInOwnScope(
+        node, candidate.name, source)) {
+    // This block declares a variable that shadows
+    // the current variable.
+    return; 
     }
+}
 
     if (type == "identifier" &&
         nodeText(node, source) == candidate.name) {
 
         if (ts_node_eq(node, candidate.nameNode)) {
-            // The declaration itself is handled separately.
-        } else if (isAnotherDeclarationName(node)) {
-            // Same spelling may refer to a shadowing declaration.
+            // Declaration itself is handled separately.
+        }
+        else if (isAnotherDeclarationName(node)) {
             unsafe = true;
-        } else {
+        }
+        else {
             references.push_back(node);
         }
     }
@@ -188,38 +254,126 @@ void collectReferences(
     }
 }
 
+
+
 void findCandidates(
     TSNode node,
     const std::string& source,
     std::vector<Candidate>& candidates
 ) {
-    if (std::string(ts_node_type(node)) == "function_definition") {
-        TSNode body = ts_node_child_by_field_name(node, "body", 4);
+    const std::string nodeType = ts_node_type(node);
 
-        if (!ts_node_is_null(body) &&
-            std::string(ts_node_type(body)) == "compound_statement") {
 
-            const std::uint32_t count = ts_node_child_count(body);
+    if (nodeType == "for_statement") {
+    const std::uint32_t count = ts_node_child_count(node);
 
-            // Only inspect declarations directly inside the function body.
-            for (std::uint32_t i = 0; i < count; ++i) {
-                TSNode child = ts_node_child(body, i);
+    for (std::uint32_t i = 0; i < count; ++i) {
+        TSNode child = ts_node_child(node, i);
 
-                Candidate candidate{};
+        Candidate candidate{};
 
-                if (isSimpleInitializedLocal(child, candidate, source)) {
-                    candidates.push_back(candidate);
+        if (isSimpleInitializedLocal(child, candidate, source)) {
+            candidates.push_back(candidate);
+            break;
+        }
+    }
+}
+
+// Look for declarations inside if initializer statements.
+    if (nodeType == "if_statement") {
+        const std::uint32_t count = ts_node_child_count(node);
+
+        for (std::uint32_t i = 0; i < count; ++i) {
+            TSNode child = ts_node_child(node, i);
+
+            if (std::string(ts_node_type(child)) != "condition_clause") {
+                continue;
+            }
+
+            const std::uint32_t clauseCount = ts_node_child_count(child);
+
+            for (std::uint32_t j = 0; j < clauseCount; ++j) {
+                TSNode clauseChild = ts_node_child(child, j);
+
+                if (std::string(ts_node_type(clauseChild)) != "init_statement") {
+                    continue;
+                }
+
+                const std::uint32_t initCount =
+                    ts_node_child_count(clauseChild);
+
+                for (std::uint32_t k = 0; k < initCount; ++k) {
+                    TSNode declaration = ts_node_child(clauseChild, k);
+
+                    Candidate candidate{};
+
+                    if (isSimpleInitializedLocal(
+                            declaration, candidate, source)) {
+                        candidates.push_back(candidate);
+                        std::cout << "[DEBUG] While candidate detected: "
+                        << candidate.name << '\n';
+                    }
                 }
             }
         }
     }
 
+    // Handle declarations inside while condition clauses.
+    if (nodeType == "while_statement") {
+
+        const std::uint32_t count = ts_node_child_count(node);
+
+        for (std::uint32_t i = 0; i < count; ++i) {
+
+            TSNode child = ts_node_child(node, i);
+
+            if (std::string(ts_node_type(child)) != "condition_clause") {
+                continue;
+            }
+
+            const std::uint32_t conditionCount =
+                ts_node_child_count(child);
+
+            for (std::uint32_t j = 0; j < conditionCount; ++j) {
+
+                TSNode declaration = ts_node_child(child, j);
+
+                Candidate candidate{};
+
+                if (isSimpleInitializedLocal(
+                        declaration, candidate, source)) {
+
+                    candidates.push_back(candidate);
+                    break;
+                }
+            }
+
+            break;
+        }
+    }
+    // Look for declarations directly inside every compound scope.
+    if (nodeType == "compound_statement") {
+        const std::uint32_t count = ts_node_child_count(node);
+
+        for (std::uint32_t i = 0; i < count; ++i) {
+            TSNode child = ts_node_child(node, i);
+
+            Candidate candidate{};
+
+            if (isSimpleInitializedLocal(child, candidate, source)) {
+                candidates.push_back(candidate);
+            }
+        }
+    }
+
+    // Recursively inspect nested scopes and other syntax nodes.
     const std::uint32_t count = ts_node_child_count(node);
 
     for (std::uint32_t i = 0; i < count; ++i) {
         findCandidates(ts_node_child(node, i), source, candidates);
     }
 }
+
 
 } // namespace
 
@@ -407,53 +561,111 @@ bool transformCppFile(
     std::size_t skippedCount = 0;
     std::size_t sequence = 0;
 
-    for (const Candidate& candidate : candidates) {
-        TSNode function = ts_node_parent(candidate.declaration);
+   
+for (const Candidate& candidate : candidates) {
 
-        // Find the function body containing this declaration.
-        while (!ts_node_is_null(function) &&
-               std::string(ts_node_type(function)) != "function_definition") {
-            function = ts_node_parent(function);
+    // Find the scope containing this declaration.
+    TSNode scope = ts_node_parent(candidate.declaration);
+
+    std::cout << "[DEBUG] Candidate: " << candidate.name << '\n';
+
+    if (!ts_node_is_null(scope)) {
+        std::cout << "[DEBUG] Initial parent scope: "
+                << ts_node_type(scope) << '\n';
+    }
+
+    if (!ts_node_is_null(scope) &&
+        std::string(ts_node_type(scope)) == "init_statement") {
+
+        TSNode conditionClause = ts_node_parent(scope);
+
+        if (!ts_node_is_null(conditionClause) &&
+            std::string(ts_node_type(conditionClause)) == "condition_clause") {
+
+            scope = ts_node_parent(conditionClause);
         }
+    }
 
-        if (ts_node_is_null(function)) {
-            ++skippedCount;
-            continue;
+    // Handle declarations inside while condition clauses.
+    if (!ts_node_is_null(scope) &&
+        std::string(ts_node_type(scope)) == "condition_clause") {
+
+        TSNode whileStatement = ts_node_parent(scope);
+
+        if (!ts_node_is_null(whileStatement) &&
+            std::string(ts_node_type(whileStatement)) == "while_statement") {
+
+            scope = whileStatement;
         }
+    }
 
-        TSNode body = ts_node_child_by_field_name(function, "body", 4);
+    if (!ts_node_is_null(scope)) {
+    std::cout << "[DEBUG] Final scope: "
+              << ts_node_type(scope) << '\n';
+    }
 
-        std::vector<TSNode> references;
-        bool unsafe = false;
+    if (ts_node_is_null(scope)) {
+        ++skippedCount;
+        continue;
+    }
 
-        collectReferences(
-            body, body, candidate, source, references, unsafe
-        );
+    
+    const std::string scopeType = ts_node_type(scope);
 
-        if (unsafe) {
-            ++skippedCount;
-            continue;
-        }
+    // Accept ordinary block scopes and for-loop scopes.
+    if (scopeType != "compound_statement" &&
+    scopeType != "for_statement" &&
+    scopeType != "if_statement" &&
+    scopeType != "while_statement") {
+        ++skippedCount;
+        continue;
+    }
 
-        const std::string replacement =
-            "obf_var_" + std::to_string(++sequence);
+    std::vector<TSNode> references;
+    bool unsafe = false;
 
+    collectReferences(
+        scope, scope, candidate, source, references, unsafe
+    );
+
+    if (unsafe) {
+        ++skippedCount;
+        continue;
+    }
+
+    std::cout << "[DEBUG] References found: "
+          << references.size() << '\n';
+
+    std::cout << "[DEBUG] Unsafe: "
+          << (unsafe ? "true" : "false") << '\n';
+    const std::string replacement =
+        "obf_var_" + std::to_string(++sequence);
+
+    edits.push_back({
+        static_cast<std::size_t>(
+            ts_node_start_byte(candidate.nameNode)
+        ),
+        static_cast<std::size_t>(
+            ts_node_end_byte(candidate.nameNode)
+        ),
+        replacement
+    });
+
+    for (TSNode reference : references) {
         edits.push_back({
-            static_cast<std::size_t>(ts_node_start_byte(candidate.nameNode)),
-            static_cast<std::size_t>(ts_node_end_byte(candidate.nameNode)),
+            static_cast<std::size_t>(
+                ts_node_start_byte(reference)
+            ),
+            static_cast<std::size_t>(
+                ts_node_end_byte(reference)
+            ),
             replacement
         });
-
-        for (TSNode reference : references) {
-            edits.push_back({
-                static_cast<std::size_t>(ts_node_start_byte(reference)),
-                static_cast<std::size_t>(ts_node_end_byte(reference)),
-                replacement
-            });
-        }
-
-        ++renamedCount;
     }
+
+    ++renamedCount;
+}
+
 
     
 
