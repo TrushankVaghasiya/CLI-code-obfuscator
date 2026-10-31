@@ -522,6 +522,65 @@ if(BUILD_TESTING)
             -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_member_scope.cmake"
     )
 
+        # Class member access through function parameters.
+    add_test(
+        NAME transform_member_parameter
+        COMMAND ${CMAKE_COMMAND}
+            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
+            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/member_parameter.cpp"
+            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/member_parameter_output.cpp"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_member_parameter.cmake"
+    )
+
+    # Class member access through pointer parameters.
+    add_test(
+        NAME transform_member_pointer_parameter
+        COMMAND ${CMAKE_COMMAND}
+            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
+            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_member_pointer_parameter.cpp"
+            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/member_pointer_parameter_output.cpp"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_member_pointer_parameter.cmake"
+    )
+
+    # Class member access through reference parameters.
+    add_test(
+        NAME transform_member_reference_parameter
+        COMMAND ${CMAKE_COMMAND}
+            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
+            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_member_reference_parameter.cpp"
+            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/member_reference_parameter_output.cpp"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_member_reference_parameter.cmake"
+    )
+
+    # Class member access through multiple function parameters.
+    add_test(
+        NAME transform_member_multiple_parameters
+        COMMAND ${CMAKE_COMMAND}
+            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
+            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_member_multiple_parameters.cpp"
+            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/member_multiple_parameters_output.cpp"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_member_multiple_parameters.cmake"
+    )
+
+    # Class member access through mixed function parameter types.
+    add_test(
+        NAME transform_member_mixed_parameters
+        COMMAND ${CMAKE_COMMAND}
+            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
+            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_member_mixed_parameters.cpp"
+            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/member_mixed_parameters_output.cpp"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_member_mixed_parameters.cmake"
+    )
+
+    # Class member access through lambda parameters.
+    add_test(
+        NAME transform_member_lambda_parameter
+        COMMAND ${CMAKE_COMMAND}
+            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
+            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_member_lambda_parameter.cpp"
+            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/member_lambda_parameter_output.cpp"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_member_lambda_parameter.cmake"
+    )
 endif()
 
 # Tree-sitter runtime and C++ grammar

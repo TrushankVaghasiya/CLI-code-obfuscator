@@ -199,6 +199,104 @@ const ObjectVariable* resolveObjectVariable(
     return nullptr;
 }
 
+void findObjectParameters(
+    TSNode node,
+    const std::string& source,
+    std::vector<ObjectVariable>& objects
+) {
+    const std::string nodeType = ts_node_type(node);
+
+    if (nodeType == "parameter_declaration") {
+        TSNode typeNode =
+            ts_node_child_by_field_name(node, "type", 4);
+
+        TSNode declaratorNode =
+            ts_node_child_by_field_name(node, "declarator", 10);
+
+        if (!ts_node_is_null(typeNode) &&
+            !ts_node_is_null(declaratorNode) &&
+            std::string(ts_node_type(typeNode)) == "type_identifier") {
+
+            const std::string declaratorType =
+                ts_node_type(declaratorNode);
+
+            TSNode nameNode = findDeclaratorIdentifier(declaratorNode);
+
+            const bool isSupportedDeclarator =
+                declaratorType == "identifier" ||
+                declaratorType == "pointer_declarator" ||
+                declaratorType == "reference_declarator";
+
+            if (!ts_node_is_null(nameNode) && isSupportedDeclarator) {
+                const std::string nameType = ts_node_type(nameNode);
+
+                if (nameType == "identifier") {
+                    TSNode functionNode = ts_node_parent(node);
+
+                    while (!ts_node_is_null(functionNode)) {
+
+                        const std::string parentType =
+                            ts_node_type(functionNode);
+
+                        if (parentType == "function_definition" ||
+                            parentType == "lambda_expression") {
+                            break;
+                        }
+
+                        functionNode = ts_node_parent(functionNode);
+                    }
+
+                    if (!ts_node_is_null(functionNode)) {
+                        TSNode bodyNode = {};
+
+                        const std::uint32_t functionChildCount =
+                            ts_node_child_count(functionNode);
+
+                        for (std::uint32_t i = 0; i < functionChildCount; ++i) {
+
+                            TSNode child = ts_node_child(functionNode, i);
+
+                            if (std::string(ts_node_type(child)) ==
+                                "compound_statement") {
+                                bodyNode = child;
+                                break;
+                            }
+                        }
+
+                        if (!ts_node_is_null(bodyNode) &&
+                            std::string(ts_node_type(bodyNode)) ==
+                                "compound_statement") {
+
+                            ObjectVariable object;
+                            object.className = nodeText(typeNode, source);
+                            object.variableName = nodeText(nameNode, source);
+                            object.declaration = node;
+                            object.nameNode = nameNode;
+                            object.scope = bodyNode;
+                            object.isPointer =
+                                declaratorType == "pointer_declarator";
+                            object.isClassObject = true;
+
+                            objects.push_back(object);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    const std::uint32_t count = ts_node_child_count(node);
+
+    for (std::uint32_t i = 0; i < count; ++i) {
+        findObjectParameters(
+            ts_node_child(node, i),
+            source,
+            objects
+        );
+    }
+}
+
+
 void findObjectDeclarations(
     TSNode node,
     const std::string& source,
@@ -1675,6 +1773,10 @@ bool transformCppFile(
         source,
         objectVariables
     );
+
+    findObjectParameters(root, source, objectVariables);
+
+
 
     std::cout << "\n[DEBUG] Discovered object variables:\n";
 
