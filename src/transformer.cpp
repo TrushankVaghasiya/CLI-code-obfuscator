@@ -51,6 +51,14 @@ struct ObjectVariable {
     bool isClassObject;
 };
 
+struct FunctionCandidate {
+    std::string name;
+    std::string signature;
+    std::vector<TSNode> nameNodes;
+    bool overloaded = false;
+    bool hasDefinition = false;
+};
+
 std::string nodeText(TSNode node, const std::string& source) {
     const std::size_t start = ts_node_start_byte(node);
     const std::size_t end = ts_node_end_byte(node);
@@ -60,6 +68,224 @@ std::string nodeText(TSNode node, const std::string& source) {
     }
 
     return source.substr(start, end - start);
+}
+
+TSNode findFunctionNameNode(TSNode functionDeclarator) {
+    const std::uint32_t count =
+        ts_node_child_count(functionDeclarator);
+
+    for (std::uint32_t i = 0; i < count; ++i) {
+        TSNode child = ts_node_child(functionDeclarator, i);
+
+        if (std::string(ts_node_type(child)) == "identifier") {
+            return child;
+        }
+    }
+
+    return {};
+}
+
+TSNode findDirectFunctionDeclarator(TSNode node) {
+    const std::uint32_t count = ts_node_child_count(node);
+
+    for (std::uint32_t i = 0; i < count; ++i) {
+        TSNode child = ts_node_child(node, i);
+
+        if (std::string(ts_node_type(child)) ==
+            "function_declarator") {
+            return child;
+        }
+    }
+
+    return {};
+}
+
+std::string getFunctionSignature(
+    TSNode functionDeclarator,
+    const std::string& source
+) {
+    TSNode parameterList =
+        ts_node_child_by_field_name(
+            functionDeclarator,
+            "parameters",
+            10
+        );
+
+    if (ts_node_is_null(parameterList)) {
+        return "";
+    }
+
+    std::string signature;
+
+    const std::uint32_t count =
+        ts_node_child_count(parameterList);
+
+    for (std::uint32_t i = 0; i < count; ++i) {
+        TSNode child = ts_node_child(parameterList, i);
+
+        if (std::string(ts_node_type(child)) ==
+            "parameter_declaration") {
+
+            // Use the complete parameter declaration.
+            // Remove parameter names so prototype and definition
+            // signatures can be compared.
+            TSNode typeNode = ts_node_child(child, 0);
+
+            if (!ts_node_is_null(typeNode)) {
+                signature += nodeText(typeNode, source);
+                signature += ";";
+            }
+        }
+    }
+
+    return signature;
+}
+
+void findFunctionCandidates(
+    TSNode root,
+    const std::string& source,
+    std::vector<FunctionCandidate>& candidates
+) {
+    const std::uint32_t count = ts_node_child_count(root);
+
+    for (std::uint32_t i = 0; i < count; ++i) {
+        TSNode child = ts_node_child(root, i);
+        const std::string type = ts_node_type(child);
+
+        TSNode functionDeclarator = {};
+
+        if (type == "function_definition") {
+            functionDeclarator =
+                findDirectFunctionDeclarator(child);
+        }
+        else if (type == "declaration") {
+            functionDeclarator =
+                findDirectFunctionDeclarator(child);
+        }
+        else {
+            continue;
+        }
+
+        if (ts_node_is_null(functionDeclarator)) {
+            continue;
+        }
+
+        TSNode nameNode =
+            findFunctionNameNode(functionDeclarator);
+
+        if (ts_node_is_null(nameNode)) {
+            continue;
+        }
+
+        const std::string name = nodeText(nameNode, source);
+
+        if (name == "main") {
+            continue;
+        }
+
+        const std::string signature =
+            getFunctionSignature(functionDeclarator, source);
+
+        auto existing = std::find_if(
+            candidates.begin(),
+            candidates.end(),
+            [&](const FunctionCandidate& candidate) {
+                return candidate.name == name;
+            }
+        );
+
+        if (existing == candidates.end()) {
+            FunctionCandidate candidate;
+
+            candidate.name = name;
+            candidate.signature = signature;
+            candidate.nameNodes.push_back(nameNode);
+            candidate.hasDefinition = (type == "function_definition");
+
+            candidates.push_back(candidate);
+
+            
+        }
+        else {
+            if (existing->signature != signature) {
+                existing->overloaded = true;
+            }
+
+            if (type == "function_definition") {
+                existing->hasDefinition = true;
+            }
+
+            existing->nameNodes.push_back(nameNode);
+        }
+    }
+}
+
+void collectFunctionCalls(
+    TSNode node,
+    const std::string& source,
+    const std::string& functionName,
+    std::vector<TSNode>& references
+) {
+    if (std::string(ts_node_type(node)) == "call_expression") {
+
+        TSNode functionNode =
+            ts_node_child_by_field_name(node, "function", 8);
+
+        if (!ts_node_is_null(functionNode) &&
+            std::string(ts_node_type(functionNode)) == "identifier") {
+
+            if (nodeText(functionNode, source) == functionName) {
+                references.push_back(functionNode);
+            }
+        }
+    }
+
+    const std::uint32_t count = ts_node_child_count(node);
+
+    for (std::uint32_t i = 0; i < count; ++i) {
+        collectFunctionCalls(
+            ts_node_child(node, i),
+            source,
+            functionName,
+            references
+        );
+    }
+}
+
+TSNode findDeclaratorIdentifier(TSNode node);
+
+bool hasPotentialFunctionShadowing(
+    TSNode node,
+    const std::string& source,
+    const std::string& functionName
+) {
+    const std::string nodeType = ts_node_type(node);
+
+    // Check variable and parameter declarations.
+    if (nodeType == "init_declarator" ||
+        nodeType == "parameter_declaration") {
+
+        TSNode nameNode = findDeclaratorIdentifier(node);
+
+        if (!ts_node_is_null(nameNode) &&
+            nodeText(nameNode, source) == functionName) {
+
+            return true;
+        }
+    }
+
+    const std::uint32_t count = ts_node_child_count(node);
+
+    for (std::uint32_t i = 0; i < count; ++i) {
+        if (hasPotentialFunctionShadowing(
+                ts_node_child(node, i),
+                source,
+                functionName)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 TSNode findDeclaratorIdentifier(TSNode node) {
@@ -74,10 +300,11 @@ TSNode findDeclaratorIdentifier(TSNode node) {
     }
 
     if (type != "pointer_declarator" &&
-        type != "reference_declarator" &&
-        type != "array_declarator" &&
-        type != "parenthesized_declarator" &&
-        type != "attributed_declarator") {
+    type != "reference_declarator" &&
+    type != "array_declarator" &&
+    type != "parenthesized_declarator" &&
+    type != "attributed_declarator" &&
+    type != "init_declarator") {
         return {};
     }
 
@@ -362,15 +589,7 @@ void findObjectDeclarations(
 
                 objects.push_back(object);
 
-                std::cout << "[DEBUG] Variable discovered: "
-                          << (object.isClassObject
-                                  ? object.className
-                                  : typeName)
-                          << (object.isPointer ? "* " : " ")
-                          << object.variableName
-                          << " | Scope: "
-                          << ts_node_type(object.scope)
-                          << '\n';
+                
             }
         }
     }
@@ -459,9 +678,7 @@ void findMemberCandidates(
                         memberName
                     });
 
-                    std::cout << "[DEBUG] Member discovered: "
-                              << className << "::"
-                              << memberName << '\n';
+                   
                 }
             }
         }
@@ -1766,6 +1983,28 @@ bool transformCppFile(
         memberCandidates
     );
 
+    std::vector<FunctionCandidate> functionCandidates;
+
+    findFunctionCandidates(
+        root,
+        source,
+        functionCandidates
+    );
+
+        for (const FunctionCandidate& candidate : functionCandidates) {
+
+        std::vector<TSNode> references;
+
+        collectFunctionCalls(
+            root,
+            source,
+            candidate.name,
+            references
+        );
+
+        
+    }
+
     std::vector<ObjectVariable> objectVariables;
 
     findObjectDeclarations(
@@ -1781,10 +2020,7 @@ bool transformCppFile(
     std::cout << "\n[DEBUG] Discovered object variables:\n";
 
     for (const ObjectVariable& object : objectVariables) {
-        std::cout << "  Class: " << object.className
-                << " | Variable: " << object.variableName
-                << " | Pointer: " << object.isPointer
-                << '\n';
+       
     }
 
     // Collect references to discovered class members.
@@ -1815,10 +2051,7 @@ bool transformCppFile(
             references
         );
 
-        std::cout << "[DEBUG] Total references for "
-          << candidate.className << "::"
-          << candidate.name << ": "
-          << references.size() << '\n';
+        
 
         for (TSNode reference : references) {
 
@@ -1830,13 +2063,7 @@ bool transformCppFile(
                     ? "this"
                     : "implicit";
 
-            std::cout << "[DEBUG] Member reference: "
-                    << candidate.className << "::"
-                    << candidate.name
-                    << " | " << referenceType
-                    << " | line "
-                    << ts_node_start_point(reference).row + 1
-                    << '\n';
+           
         }
 
         memberReferenceGroups.push_back({
@@ -1849,6 +2076,9 @@ bool transformCppFile(
     std::size_t renamedCount = 0;
     std::size_t skippedCount = 0;
     std::size_t sequence = 0;
+    std::size_t functionSequence = 0;
+    std::size_t functionsRenamed = 0;
+    std::size_t functionsSkipped = 0;
 
    
 for (const Candidate& candidate : candidates) {
@@ -1856,7 +2086,7 @@ for (const Candidate& candidate : candidates) {
     // Find the scope containing this declaration.
     TSNode scope = ts_node_parent(candidate.declaration);
 
-    std::cout << "[DEBUG] Candidate: " << candidate.name << '\n';
+   
 
     // Lambda parameters belong to the lambda's body scope.
     // Resolve the body scope for lambda and function parameters.
@@ -1912,10 +2142,7 @@ for (const Candidate& candidate : candidates) {
         scope = parameterScope;
     }
 
-    if (!ts_node_is_null(scope)) {
-        std::cout << "[DEBUG] Initial parent scope: "
-                << ts_node_type(scope) << '\n';
-    }
+    
 
     if (!ts_node_is_null(scope) &&
         std::string(ts_node_type(scope)) == "init_statement") {
@@ -1946,10 +2173,7 @@ for (const Candidate& candidate : candidates) {
         }
     }
 
-    if (!ts_node_is_null(scope)) {
-    std::cout << "[DEBUG] Final scope: "
-              << ts_node_type(scope) << '\n';
-    }
+    
 
     if (ts_node_is_null(scope)) {
         ++skippedCount;
@@ -1968,8 +2192,7 @@ for (const Candidate& candidate : candidates) {
         continue;
     }
 
-    std::cout << "[DEBUG] Checking accepted scope: "
-          << scopeType << '\n';
+    
 
     std::vector<TSNode> references;
     bool unsafe = false;
@@ -1978,28 +2201,17 @@ for (const Candidate& candidate : candidates) {
         scope, scope, candidate, source, references, unsafe
     );
 
-    std::cout << "[DEBUG] Candidate name: "
-          << candidate.name << '\n';
-
-    std::cout << "[DEBUG] Reference count: "
-          << references.size() << '\n';
-
-    std::cout << "[DEBUG] Unsafe status: "
-          << (unsafe ? "true" : "false") << '\n';
+    
 
     if (unsafe) {
-        std::cout << "[DEBUG] Candidate rejected due to unsafe references\n";
+        
         ++skippedCount;
         continue;
     }
 
     
 
-    std::cout << "[DEBUG] References found: "
-          << references.size() << '\n';
-
-    std::cout << "[DEBUG] Unsafe: "
-          << (unsafe ? "true" : "false") << '\n';
+    
     const std::string replacement =
         "obf_var_" + std::to_string(++sequence);
 
@@ -2069,15 +2281,93 @@ for (const MemberReferenceGroup& group : memberReferenceGroups) {
 
     ++renamedMemberCount;
 
-    std::cout << "[DEBUG] Member renamed: "
-              << candidate.className << "::"
-              << candidate.name << " -> "
-              << replacement << '\n';
+    
 }
 
-std::cout << "[INFO] Class members renamed: "
+
+
+for (const FunctionCandidate& candidate : functionCandidates) {
+
+    if (candidate.overloaded) {
+        ++functionsSkipped;
+
+        std::cout << "[INFO] Function skipped (overloaded): "
+                << candidate.name << '\n';
+
+        continue;
+    }
+
+    if (!candidate.hasDefinition) {
+        ++functionsSkipped;
+
+        std::cout << "[INFO] Function skipped (no definition): "
+                << candidate.name << '\n';
+
+        continue;
+    }
+
+
+    if (hasPotentialFunctionShadowing(
+        root,
+        source,
+        candidate.name)) {
+
+        ++functionsSkipped;
+
+        std::cout << "[INFO] Function skipped (potential shadowing): "
+                << candidate.name << '\n';
+
+        continue;
+    }
+
+    std::vector<TSNode> references;
+
+    collectFunctionCalls(
+        root,
+        source,
+        candidate.name,
+        references
+    );
+
+    // Generate one replacement name for this function.
+    ++functionSequence;
+
+    const std::string newName =
+        "obf_func_" + std::to_string(functionSequence);
+
+    // Rename every prototype and definition.
+    for (TSNode nameNode : candidate.nameNodes) {
+        edits.push_back({
+            ts_node_start_byte(nameNode),
+            ts_node_end_byte(nameNode),
+            newName
+        });
+    }
+
+    // Rename all direct calls, including recursive calls.
+    for (TSNode reference : references) {
+        edits.push_back({
+            ts_node_start_byte(reference),
+            ts_node_end_byte(reference),
+            newName
+        });
+    }
+
+    ++functionsRenamed;
+
+    std::cout << "[INFO] Function renamed: "
+              << candidate.name << " -> "
+              << newName << '\n';
+}
+
+    std::cout << "[INFO] Class members renamed: "
           << renamedMemberCount << '\n';
 
+          std::cout << "[INFO] Functions renamed: "
+          << functionsRenamed << '\n';
+
+    std::cout << "[INFO] Functions skipped: "
+          << functionsSkipped << '\n';
     
 
     // Apply edits right-to-left so earlier byte offsets remain valid.

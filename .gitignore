@@ -1,6 +1,6 @@
-
 # CMake build artifacts
 build/
+buld/
 cmake-build-*/
 
 # Visual Studio files
@@ -14,6 +14,19 @@ cmake-build-*/
 *.obj
 *.lib
 *.dll
+*.pdb
+*.ilk
+*.exp
 
 # Temporary files
 *.tmp
+*.log
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local backup
+src/transformer_backup.cpp
