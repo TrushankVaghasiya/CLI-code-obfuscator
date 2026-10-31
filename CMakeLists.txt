@@ -131,22 +131,22 @@ if(BUILD_TESTING)
 
     # Level 2 comment-removal test.
     add_test(
-        NAME transform_comments
-        COMMAND ${CMAKE_COMMAND}
-            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
-            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_comments.cpp"
-            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/test-transform-comments.cpp"
-            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_comments.cmake"
+    NAME validate_comment_removal
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_comments.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/validated_comments.cpp
+        -P ${CMAKE_SOURCE_DIR}/tests/check_transform_comments.cmake
     )
 
     # String and character literal preservation test.
-    add_test(
-        NAME transform_literals
-        COMMAND ${CMAKE_COMMAND}
-            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
-            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/transform_literals.cpp"
-            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/test-transform-literals.cpp"
-            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_literals.cmake"
+   add_test(
+    NAME validate_literal_transformation
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_literals.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/validated_literals.cpp
+        -P ${CMAKE_SOURCE_DIR}/tests/check_transform_literals.cmake
     )
 
     # Nested reference test.
@@ -309,11 +309,11 @@ if(BUILD_TESTING)
     )
 
     add_test(
-    NAME transform_lambda_shadowing
+    NAME validate_lambda_shadowing
     COMMAND ${CMAKE_COMMAND}
         -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
         -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_lambda_shadowing.cpp
-        -DOUTPUT=${CMAKE_BINARY_DIR}/lambda_shadowing_output.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/validated_lambda_shadowing.cpp
         -P ${CMAKE_SOURCE_DIR}/tests/check_transform_lambda_shadowing.cmake
     )
 
@@ -323,6 +323,203 @@ if(BUILD_TESTING)
         --input ${CMAKE_SOURCE_DIR}/tests/data/transform_lambda_parameters.cpp
         --output ${CMAKE_BINARY_DIR}/lambda_parameters_output.cpp
         --level 1
+    )
+
+    add_test(
+    NAME transform_function_parameters
+    COMMAND obfuscator
+        --input ${CMAKE_SOURCE_DIR}/tests/data/transform_function_parameters.cpp
+        --output ${CMAKE_BINARY_DIR}/function_parameters_output.cpp
+        --level 1
+    )
+
+    add_test(
+        NAME transform_function_shadowing
+        COMMAND obfuscator
+            --input ${CMAKE_SOURCE_DIR}/tests/data/transform_function_shadowing.cpp
+            --output ${CMAKE_BINARY_DIR}/function_shadowing_output.cpp
+            --level 1
+    )
+
+    add_test(
+        NAME transform_function_lambda
+        COMMAND obfuscator
+            --input ${CMAKE_SOURCE_DIR}/tests/data/transform_function_lambda.cpp
+            --output ${CMAKE_BINARY_DIR}/function_lambda_output.cpp
+            --level 1
+    )
+
+        
+    add_test(
+        NAME validate_function_parameters
+        COMMAND ${CMAKE_COMMAND}
+            -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+            -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_function_parameters.cpp
+            -DOUTPUT=${CMAKE_BINARY_DIR}/validated_function_parameters.cpp
+            -P ${CMAKE_SOURCE_DIR}/tests/check_transform_function_parameters.cmake
+    )
+
+    add_test(
+    NAME validate_lambda_parameters
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_lambda_parameters.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/validated_lambda_parameters.cpp
+        -P ${CMAKE_SOURCE_DIR}/tests/check_transform_lambda_parameters.cmake
+    )
+
+    add_test(
+    NAME compile_transformed_basic
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DCXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_basic.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/compiled_basic_output.cpp
+        -DLEVEL=1
+        -P ${CMAKE_SOURCE_DIR}/tests/check_compilation.cmake
+    )
+
+    add_test(
+    NAME compile_transformed_comments
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DCXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_comments.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/compiled_comments_output.cpp
+        -DLEVEL=2
+        -P ${CMAKE_SOURCE_DIR}/tests/check_compilation.cmake
+    )
+
+    add_test(
+        NAME compile_transformed_literals
+        COMMAND ${CMAKE_COMMAND}
+            -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+            -DCXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe
+            -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_literals.cpp
+            -DOUTPUT=${CMAKE_BINARY_DIR}/compiled_literals_output.cpp
+            -DLEVEL=3
+            -P ${CMAKE_SOURCE_DIR}/tests/check_compilation.cmake
+    )
+
+    add_test(
+    NAME runtime_equivalence_basic
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DCXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_basic.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/runtime_basic_output.cpp
+        -DLEVEL=1
+        -P ${CMAKE_SOURCE_DIR}/tests/check_runtime_equivalence.cmake
+    )
+
+    add_test(
+    NAME runtime_equivalence_comments
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DCXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_comments.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/runtime_comments_output.cpp
+        -DLEVEL=2
+        -P ${CMAKE_SOURCE_DIR}/tests/check_runtime_equivalence.cmake
+    )
+
+    add_test(
+        NAME runtime_equivalence_literals
+        COMMAND ${CMAKE_COMMAND}
+            -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+            -DCXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe
+            -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_literals.cpp
+            -DOUTPUT=${CMAKE_BINARY_DIR}/runtime_literals_output.cpp
+            -DLEVEL=3
+            -P ${CMAKE_SOURCE_DIR}/tests/check_runtime_equivalence.cmake
+    )
+
+    add_test(
+    NAME runtime_equivalence_pointers
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DCXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_pointers_references.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/runtime_pointers_output.cpp
+        -DLEVEL=1
+        -P ${CMAKE_SOURCE_DIR}/tests/check_runtime_equivalence.cmake
+    )
+
+    add_test(
+    NAME runtime_equivalence_const
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DCXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_const.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/runtime_const_output.cpp
+        -DLEVEL=1
+        -P ${CMAKE_SOURCE_DIR}/tests/check_runtime_equivalence.cmake
+    )
+
+    add_test(
+    NAME runtime_equivalence_global_variables
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DCXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_global_variables.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/runtime_global_output.cpp
+        -DLEVEL=1
+        -P ${CMAKE_SOURCE_DIR}/tests/check_runtime_equivalence.cmake
+    )
+
+    add_test(
+    NAME runtime_equivalence_class_members
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DCXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_class_members.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/runtime_class_members_output.cpp
+        -DLEVEL=1
+        -P ${CMAKE_SOURCE_DIR}/tests/check_runtime_equivalence.cmake
+    )
+
+    add_test(
+    NAME runtime_equivalence_struct_members
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DCXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_struct_members.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/runtime_struct_members_output.cpp
+        -DLEVEL=1
+        -P ${CMAKE_SOURCE_DIR}/tests/check_runtime_equivalence.cmake
+    )
+
+
+    add_test(
+    NAME runtime_equivalence_arrays
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DCXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_arrays.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/runtime_arrays_output.cpp
+        -DLEVEL=1
+        -P ${CMAKE_SOURCE_DIR}/tests/check_runtime_equivalence.cmake
+    )
+
+    add_test(
+    NAME runtime_equivalence_multidimensional_arrays
+    COMMAND ${CMAKE_COMMAND}
+        -DOBFUSCATOR=$<TARGET_FILE:obfuscator>
+        -DCXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe
+        -DINPUT=${CMAKE_SOURCE_DIR}/tests/data/transform_multidimensional_arrays.cpp
+        -DOUTPUT=${CMAKE_BINARY_DIR}/runtime_multidimensional_arrays_output.cpp
+        -DLEVEL=1
+        -P ${CMAKE_SOURCE_DIR}/tests/check_runtime_equivalence.cmake
+    )
+
+          # Class member access with nested-scope shadowing.
+    add_test(
+        NAME transform_member_scope
+        COMMAND ${CMAKE_COMMAND}
+            "-DOBFUSCATOR=$<TARGET_FILE:obfuscator>"
+            "-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/data/member_scope.cpp"
+            "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/member_scope_output.cpp"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_transform_member_scope.cmake"
     )
 
 endif()

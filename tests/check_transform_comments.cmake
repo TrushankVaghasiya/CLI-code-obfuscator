@@ -1,15 +1,13 @@
-if(NOT DEFINED OBFUSCATOR OR
-   NOT DEFINED INPUT OR
-   NOT DEFINED OUTPUT)
-    message(FATAL_ERROR
-        "OBFUSCATOR, INPUT, and OUTPUT are required")
+
+if(NOT DEFINED OBFUSCATOR OR NOT DEFINED INPUT OR NOT DEFINED OUTPUT)
+    message(FATAL_ERROR "Missing required test arguments")
 endif()
 
 execute_process(
     COMMAND "${OBFUSCATOR}"
-        -i "${INPUT}"
-        -o "${OUTPUT}"
-        --level 2
+            --input "${INPUT}"
+            --output "${OUTPUT}"
+            --level 2
     RESULT_VARIABLE result
     OUTPUT_VARIABLE stdout
     ERROR_VARIABLE stderr
@@ -17,50 +15,46 @@ execute_process(
 
 if(NOT result EQUAL 0)
     message(FATAL_ERROR
-        "Obfuscator failed.\nSTDOUT:\n${stdout}\nSTDERR:\n${stderr}")
+        "Obfuscator execution failed:\n${stdout}\n${stderr}")
 endif()
 
 if(NOT EXISTS "${OUTPUT}")
-    message(FATAL_ERROR "Transformed output was not created")
+    message(FATAL_ERROR "Output file was not generated")
 endif()
 
+file(READ "${INPUT}" original)
 file(READ "${OUTPUT}" transformed)
 
-# The line comment must be removed.
-string(FIND "${transformed}"
-    "This line comment should be removed."
-    line_comment_pos)
-
-if(NOT line_comment_pos EQUAL -1)
+# Verify line comment removal.
+if(transformed MATCHES "This line comment should be removed")
     message(FATAL_ERROR "Line comment was not removed")
 endif()
 
-# The block comment must be removed.
-string(FIND "${transformed}"
-    "This block comment should be removed."
-    block_comment_pos)
-
-if(NOT block_comment_pos EQUAL -1)
+# Verify block comment removal.
+if(transformed MATCHES "This block comment should be removed")
     message(FATAL_ERROR "Block comment was not removed")
 endif()
 
-# Comment-like text inside the string must remain.
-string(FIND "${transformed}"
-    "This // is not a comment"
-    string_pos)
-
-if(string_pos EQUAL -1)
-    message(FATAL_ERROR
-        "String literal was incorrectly modified")
+# Verify that comment-like text inside strings is preserved.
+if(NOT transformed MATCHES "This // is not a comment")
+    message(FATAL_ERROR "String literal was incorrectly modified")
 endif()
 
-# Variable renaming must still work.
-string(FIND "${transformed}" "obf_var_1" renamed_pos)
-
-if(renamed_pos EQUAL -1)
-    message(FATAL_ERROR
-        "Expected variable renaming at Level 2")
+# Verify variable renaming.
+if(NOT transformed MATCHES "int obf_var_1 = 5;")
+    message(FATAL_ERROR "Variable transformation failed")
 endif()
 
-message(STATUS
-    "Level 2 comment-removal test passed")
+# Verify newline preservation.
+string(REGEX MATCHALL "\n" original_newlines "${original}")
+string(REGEX MATCHALL "\n" transformed_newlines "${transformed}")
+
+list(LENGTH original_newlines original_count)
+list(LENGTH transformed_newlines transformed_count)
+
+if(NOT original_count EQUAL transformed_count)
+    message(FATAL_ERROR
+        "Newline count changed: ${original_count} -> ${transformed_count}")
+endif()
+
+message(STATUS "Comment removal validation passed")

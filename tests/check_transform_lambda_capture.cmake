@@ -27,7 +27,7 @@ if(NOT transformed MATCHES "cout << obf_var_1")
     message(FATAL_ERROR "Lambda capture reference was not renamed")
 endif()
 
-if(transformed MATCHES "\\bvalue\\b")
+if(transformed MATCHES "(^|[^A-Za-z0-9_])value([^A-Za-z0-9_]|$)")
     message(FATAL_ERROR "Original variable name still exists")
 endif()
 
