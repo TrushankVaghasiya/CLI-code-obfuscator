@@ -32,6 +32,10 @@ add_executable(obfuscator
     src/literal_transformer.cpp
 )
 
+set_target_properties(obfuscator PROPERTIES
+    OUTPUT_NAME "obfuscate"
+)
+
 target_include_directories(obfuscator
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -653,4 +657,9 @@ target_link_libraries(ast_inspector
     PRIVATE
         tree_sitter_runtime_lib
         tree_sitter_cpp_grammar
+)
+
+# Install the CLI executable
+install(TARGETS obfuscator
+    RUNTIME DESTINATION bin
 )

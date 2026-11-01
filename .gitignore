@@ -2,6 +2,7 @@
 build/
 buld/
 cmake-build-*/
+install/
 
 # Visual Studio files
 .vs/
