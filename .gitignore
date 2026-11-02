@@ -3,6 +3,7 @@ build/
 buld/
 cmake-build-*/
 install/
+manual_tests/
 
 # Visual Studio files
 .vs/
@@ -18,6 +19,7 @@ install/
 *.pdb
 *.ilk
 *.exp
+*.zip
 
 # Temporary files
 *.tmp

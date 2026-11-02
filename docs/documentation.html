@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ AST Transformer Documentation (Plain HTML)</title>
+</head>
+<body>
+
+    <h1>C++ AST Transformer Documentation</h1>
+    <p><em>Comprehensive Function and Syntax Node Reference for <code>transformer.cpp</code></em></p>
+    <hr>
+
+    <h2>Table of Contents</h2>
+    <ul>
+        <li><a href="#overview">Overview & Obfuscation Levels</a></li>
+        <li><a href="#ast-nodes">Tree-sitter AST Node Types</a></li>
+        <li><a href="#utility-helpers">1. Utility & Text Helpers</a></li>
+        <li><a href="#declarator-helpers">2. Declarator & Identifier Helpers</a></li>
+        <li><a href="#function-analysis">3. Function Analysis & Calls</a></li>
+        <li><a href="#scope-resolution">4. Scope & Object Variable Resolution</a></li>
+        <li><a href="#member-discovery">5. Member & Object Discovery</a></li>
+        <li><a href="#shadowing-helpers">6. Shadowing & Context Checks</a></li>
+        <li><a href="#reference-collection">7. Reference Collection Functions</a></li>
+        <li><a href="#main-driver">8. Main Transformation Driver</a></li>
+    </ul>
+    <hr>
+
+    <h2 id="overview">Overview & Obfuscation Levels</h2>
+    <p>
+        The <code>transformer.cpp</code> file utilizes the <strong>Tree-sitter C++ parser</strong> library to parse C++ source files, inspect their Abstract Syntax Trees (AST), resolve variable and function scopes, and perform safe source-to-source obfuscation across three configurable levels.
+    </p>
+
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Level</th>
+                <th>Name</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Level 1</strong></td>
+                <td>Symbol Renaming</td>
+                <td>Renames local variables, function parameters, class data members, and non-overloaded functions to uniform identifiers (e.g., <code>obf_var_N</code>, <code>obf_member_N</code>, <code>obf_func_N</code>).</td>
+            </tr>
+            <tr>
+                <td><strong>Level 2</strong></td>
+                <td>Comment Stripping</td>
+                <td>Includes Level 1 operations, and strips all single-line and multi-line comments by replacing non-newline characters with spaces to preserve line offsets.</td>
+            </tr>
+            <tr>
+                <td><strong>Level 3</strong></td>
+                <td>Literal Transformation</td>
+                <td>Includes Level 1 and 2 operations, and obfuscates integer constant literals into bitwise and arithmetic expressions.</td>
+            </tr>
+        </tbody>
+    </table>
+    <hr>
+
+    <h2 id="ast-nodes">Tree-sitter AST Node Types</h2>
+    <p>The parser evaluates and queries several node types from the C++ Tree-sitter grammar:</p>
+
+    <h3>Identifiers and Types</h3>
+    <ul>
+        <li><code>identifier</code>: General names for variables, function names, and parameters.</li>
+        <li><code>field_identifier</code>: Names of class or struct member variables.</li>
+        <li><code>type_identifier</code>: Names of custom types, classes, or structs.</li>
+        <li><code>primitive_type</code>: Built-in primitive types (e.g., <code>int</code>, <code>double</code>, <code>char</code>).</li>
+    </ul>
+
+    <h3>Declarations and Declarators</h3>
+    <ul>
+        <li><code>declaration</code>: Variable or object declaration statements.</li>
+        <li><code>function_definition</code>: Complete function definition containing a body.</li>
+        <li><code>function_declarator</code>: Function signature containing parameter list and name.</li>
+        <li><code>init_declarator</code>: Variable declaration with an initializer.</li>
+        <li><code>parameter_declaration</code>: Individual parameter in a function or lambda declaration.</li>
+        <li><code>pointer_declarator</code>, <code>reference_declarator</code>, <code>array_declarator</code>, <code>parenthesized_declarator</code>, <code>attributed_declarator</code>: Wrappers for complex type declarators.</li>
+        <li><code>abstract_function_declarator</code>, <code>parameter_list</code>: Structural blocks for parameters.</li>
+    </ul>
+
+    <h3>Classes and Structs</h3>
+    <ul>
+        <li><code>class_specifier</code>: Class or struct definition block.</li>
+        <li><code>field_declaration_list</code>: Block containing class member variables and functions.</li>
+        <li><code>field_declaration</code>: Individual member field declaration inside a class.</li>
+    </ul>
+
+    <h3>Scopes and Expressions</h3>
+    <ul>
+        <li><code>compound_statement</code>: Code blocks enclosed within curly braces (<code>{ }</code>).</li>
+        <li><code>for_statement</code>, <code>if_statement</code>, <code>while_statement</code>: Control flow statements.</li>
+        <li><code>translation_unit</code>: Root global AST scope of the entire source file.</li>
+        <li><code>call_expression</code>: Function call expression.</li>
+        <li><code>field_expression</code>: Member access expressions (e.g., <code>obj.field</code>, <code>ptr->field</code>, or <code>this->field</code>).</li>
+        <li><code>comment</code>: Single-line or multi-line source code comment node.</li>
+    </ul>
+    <hr>
+
+    <h2 id="utility-helpers">1. Utility & Text Helpers</h2>
+
+    <h3><code>nodeText</code></h3>
+    <p><strong>Signature:</strong> <code>std::string nodeText(TSNode node, const std::string& source)</code></p>
+    <p>Extracts the exact substring from the source code corresponding to the given AST node using its start and end byte offsets.</p>
+
+    <h3><code>collectCommentRanges</code></h3>
+    <p><strong>Signature:</strong> <code>static void collectCommentRanges(TSNode node, std::vector&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;& ranges)</code></p>
+    <p>Recursively traverses the syntax tree searching for AST nodes of type <code>"comment"</code> and stores their byte ranges.</p>
+
+    <h3><code>removeCommentsFromSource</code></h3>
+    <p><strong>Signature:</strong> <code>static bool removeCommentsFromSource(std::string& source, std::string& error)</code></p>
+    <p>Parses the C++ file, collects all comment byte ranges, and replaces all non-newline comment characters with spaces to preserve line count and byte alignments.</p>
+    <hr>
+
+    <h2 id="declarator-helpers">2. Declarator & Identifier Helpers</h2>
+
+    <h3><code>findDeclaratorIdentifier</code></h3>
+    <p><strong>Signature:</strong> <code>TSNode findDeclaratorIdentifier(TSNode node)</code></p>
+    <p>Recursively unwraps complex variable declarators (pointers, references, arrays, parenthesized, attributed, init declarators) down to the core identifier node.</p>
+
+    <h3><code>findFunctionNameNode</code></h3>
+    <p><strong>Signature:</strong> <code>TSNode findFunctionNameNode(TSNode functionDeclarator)</code></p>
+    <p>Iterates through children of a <code>function_declarator</code> to locate the identifier node representing the function's name.</p>
+
+    <h3><code>findDirectFunctionDeclarator</code></h3>
+    <p><strong>Signature:</strong> <code>TSNode findDirectFunctionDeclarator(TSNode node)</code></p>
+    <p>Finds the child <code>function_declarator</code> node within a function declaration or definition.</p>
+    <hr>
+
+    <h2 id="function-analysis">3. Function Analysis & Calls</h2>
+
+    <h3><code>getFunctionSignature</code></h3>
+    <p><strong>Signature:</strong> <code>std::string getFunctionSignature(TSNode functionDeclarator, const std::string& source)</code></p>
+    <p>Extracts parameter types (omitting parameter names) into a delimited string to build a type signature for comparing function prototypes and detecting overloads.</p>
+
+    <h3><code>findFunctionCandidates</code></h3>
+    <p><strong>Signature:</strong> <code>void findFunctionCandidates(TSNode root, const std::string& source, std::vector&lt;FunctionCandidate&gt;& candidates)</code></p>
+    <p>Discovers non-<code>main</code> function declarations/definitions across the file, checking for signature overloads and definition bodies.</p>
+
+    <h3><code>collectFunctionCalls</code></h3>
+    <p><strong>Signature:</strong> <code>void collectFunctionCalls(TSNode node, const std::string& source, const std::string& functionName, std::vector&lt;TSNode&gt;& references)</code></p>
+    <p>Traverses the syntax tree to find all direct call site expressions matching a target function name.</p>
+
+    <h3><code>hasPotentialFunctionShadowing</code></h3>
+    <p><strong>Signature:</strong> <code>bool hasPotentialFunctionShadowing(TSNode node, const std::string& source, const std::string& functionName)</code></p>
+    <p>Checks whether any local variable or parameter declaration shares a name with a function, flagging potential shadowing risks.</p>
+    <hr>
+
+    <h2 id="scope-resolution">4. Scope & Object Variable Resolution</h2>
+
+    <h3><code>findDeclarationScope</code></h3>
+    <p><strong>Signature:</strong> <code>TSNode findDeclarationScope(TSNode node)</code></p>
+    <p>Climbs parent AST nodes to find the enclosing scope block (e.g., <code>compound_statement</code>, <code>for_statement</code>, <code>if_statement</code>, <code>while_statement</code>, or <code>translation_unit</code>).</p>
+
+    <h3><code>containsPointerDeclarator</code></h3>
+    <p><strong>Signature:</strong> <code>bool containsPointerDeclarator(TSNode node)</code></p>
+    <p>Recursively determines whether a declarator subtree contains a pointer declarator (<code>*</code>).</p>
+
+    <h3><code>resolveObjectVariable</code></h3>
+    <p><strong>Signature:</strong> <code>const ObjectVariable* resolveObjectVariable(TSNode accessNode, const std::string& variableName, const std::vector&lt;ObjectVariable&gt;& objects)</code></p>
+    <p>Resolves member access expressions (e.g. <code>obj.member</code> or <code>ptr->member</code>) to the correct visible object variable declaration based on lexical scoping and declaration byte order.</p>
+    <hr>
+
+    <h2 id="member-discovery">5. Member & Object Discovery</h2>
+
+    <h3><code>findMemberCandidates</code></h3>
+    <p><strong>Signature:</strong> <code>void findMemberCandidates(TSNode node, const std::string& source, std::vector&lt;MemberCandidate&gt;& candidates)</code></p>
+    <p>Inspects class and struct specifiers to collect data member candidates from member field lists.</p>
+
+    <h3><code>findObjectDeclarations</code></h3>
+    <p><strong>Signature:</strong> <code>void findObjectDeclarations(TSNode node, const std::string& source, std::vector&lt;ObjectVariable&gt;& objects)</code></p>
+    <p>Locates declared class/struct object instances and records their class types, variable names, pointer status, and scopes.</p>
+
+    <h3><code>findObjectParameters</code></h3>
+    <p><strong>Signature:</strong> <code>void findObjectParameters(TSNode node, const std::string& source, std::vector&lt;ObjectVariable&gt;& objects)</code></p>
+    <p>Identifies function and lambda parameters that represent class or struct objects.</p>
+    <hr>
+
+    <h2 id="shadowing-helpers">6. Shadowing & Context Checks</h2>
+
+    <h3><code>isSimpleInitializedLocal</code></h3>
+    <p><strong>Signature:</strong> <code>bool isSimpleInitializedLocal(TSNode declaration, Candidate& result, const std::string& source)</code></p>
+    <p>Verifies whether a declaration is a simple initialized local variable or condition variable and extracts its metadata.</p>
+
+    <h3><code>collectMultipleDeclarators</code></h3>
+    <p><strong>Signature:</strong> <code>void collectMultipleDeclarators(TSNode declaration, std::vector&lt;Candidate&gt;& candidates, const std::string& source)</code></p>
+    <p>Processes declaration statements containing multiple declarators (e.g., <code>int x = 1, y = 2;</code>).</p>
+
+    <h3><code>isAnotherDeclarationName</code></h3>
+    <p><strong>Signature:</strong> <code>bool isAnotherDeclarationName(TSNode node)</code></p>
+    <p>Determines if an identifier node represents a new variable declaration rather than a reference to an existing variable.</p>
+
+    <h3><code>subtreeDeclaresName</code></h3>
+    <p><strong>Signature:</strong> <code>bool subtreeDeclaresName(TSNode node, const std::string& name, const std::string& source)</code></p>
+    <p>Checks recursively if a syntax subtree declares a variable with a matching name.</p>
+
+    <h3><code>compoundDeclaresNameInOwnScope</code> / <code>statementDeclaresNameInCondition</code> / <code>forStatementDeclaresName</code></h3>
+    <p>Helper functions that check whether compound statements, conditional clauses, or <code>for</code> statements introduce a declaration that shadows an outer variable name.</p>
+    <hr>
+
+    <h2 id="reference-collection">7. Reference Collection Functions</h2>
+
+    <h3><code>collectThisMemberReferences</code></h3>
+    <p><strong>Signature:</strong> <code>void collectThisMemberReferences(TSNode node, const MemberCandidate& candidate, const std::string& source, std::vector&lt;TSNode&gt;& references)</code></p>
+    <p>Finds explicit member references using <code>this->member</code> inside class member functions.</p>
+
+    <h3><code>collectImplicitMemberReferences</code></h3>
+    <p><strong>Signature:</strong> <code>void collectImplicitMemberReferences(TSNode node, const MemberCandidate& candidate, const std::string& source, std::vector&lt;TSNode&gt;& references)</code></p>
+    <p>Finds implicit member name references inside class methods while respecting local shadowing rules.</p>
+
+    <h3><code>collectMemberReferences</code></h3>
+    <p><strong>Signature:</strong> <code>void collectMemberReferences(const MemberCandidate& candidate, const std::string& source, std::vector&lt;TSNode&gt;& references)</code></p>
+    <p>Coordinates collection of explicit and implicit member accesses across all member functions of a class.</p>
+
+    <h3><code>collectObjectMemberReferences</code></h3>
+    <p><strong>Signature:</strong> <code>void collectObjectMemberReferences(TSNode node, const MemberCandidate& candidate, const std::vector&lt;ObjectVariable&gt;& objects, const std::string& source, std::vector&lt;TSNode&gt;& references)</code></p>
+    <p>Collects member accesses performed via object instances or object pointers (e.g., <code>obj.member</code> or <code>ptr->member</code>).</p>
+
+    <h3><code>collectReferences</code></h3>
+    <p><strong>Signature:</strong> <code>void collectReferences(TSNode node, TSNode rootBody, const Candidate& candidate, const std::string& source, std::vector&lt;TSNode&gt;& references, bool& unsafe)</code></p>
+    <p>Collects usage references for a local variable candidate while flagging potential shadowing conflicts that make renaming unsafe.</p>
+
+    <h3><code>findCandidates</code></h3>
+    <p><strong>Signature:</strong> <code>void findCandidates(TSNode node, const std::string& source, std::vector&lt;Candidate&gt;& candidates)</code></p>
+    <p>Primary driver function that recursively traverses the AST to discover local variables and parameter candidates across functions, lambdas, and control flow blocks.</p>
+    <hr>
+
+    <h2 id="main-driver">8. Main Transformation Driver</h2>
+
+    <h3><code>transformCppFile</code></h3>
+    <p><strong>Signature:</strong> <code>bool transformCppFile(const std::string& inputPath, const std::string& outputPath, int level, std::string& error)</code></p>
+    <p>The main orchestration entry point that handles file I/O, parsing, multi-pass symbol discovery, reference collection, edit generation, reverse-offset sorting, string replacements, comment stripping, literal transformation, and writing output files.</p>
+
+    <h4>Algorithm Steps inside <code>transformCppFile</code>:</h4>
+    <ol>
+        <li>Validates input/output file paths and ensures the requested obfuscation level is between 1 and 3.</li>
+        <li>Reads the source code binary into memory and initializes the Tree-sitter C++ parser.</li>
+        <li>Parses the syntax tree and aborts if root syntax errors are encountered.</li>
+        <li>Discovers local variable candidates, class member candidates, function candidates, and object instances.</li>
+        <li>Collects all usage references for symbols across their respective scopes.</li>
+        <li>Generates edit structs and sorts them in descending order of byte start offsets (right-to-left) so preceding byte positions remain accurate during string substitution.</li>
+        <li>Applies replacements to the in-memory source string.</li>
+        <li>If <code>level >= 2</code>, calls <code>removeCommentsFromSource()</code>.</li>
+        <li>If <code>level >= 3</code>, calls <code>transformIntegerLiterals()</code>.</li>
+        <li>Writes the final transformed source code buffer to the output file path.</li>
+    </ol>
+    <hr>
+
+    <p><small><em>Documentation generated for transformer.cpp using Tree-sitter C++ Parser API.</em></small></p>
+
+</body>
+</html>
